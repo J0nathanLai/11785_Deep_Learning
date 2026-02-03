@@ -19,14 +19,14 @@ class MLP0:
         Pass the input through the linear layer followed by the activation layer to get the model output.
         Read the writeup (Hint: MLP0 Section) for further details on MLP0 forward and backward implementation.
         """
-        Z0 = None  # TODO
-        A1 = None  # TODO
+        Z0 = self.layers[0].forward(A0)  # TODO
+        A1 = self.layers[1].forward(Z0)  # TODO
 
         if self.debug:
             self.Z0 = Z0
             self.A1 = A1
 
-        raise NotImplementedError  # TODO - What should be the return value?
+        return A1  # TODO - What should be the return value?
 
     def backward(self, dLdA1):
         """
@@ -34,14 +34,14 @@ class MLP0:
         Read the writeup (Hint: MLP0 Section) for further details on MLP0 forward and backward implementation.
         Refer to the pseudocode in the writeup to implement backpropagation through the model.
         """
-        dLdZ0 = None  # TODO
-        dLdA0 = None  # TODO
+        dLdZ0 = self.layers[1].backward(dLdA1)  # TODO
+        dLdA0 = self.layers[0].backward(dLdZ0)  # TODO
 
         if self.debug:
             self.dLdZ0 = dLdZ0
             self.dLdA0 = dLdA0
 
-        raise NotImplementedError  # TODO - What should be the return value?
+        return   # TODO - What should be the return value?
 
 
 class MLP1:
