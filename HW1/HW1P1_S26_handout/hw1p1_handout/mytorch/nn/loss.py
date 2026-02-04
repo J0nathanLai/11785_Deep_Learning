@@ -51,7 +51,8 @@ class CrossEntropyLoss:
         Ones_C = np.ones((self.C, 1))  # TODO
         Ones_N = np.ones((self.N, 1))  # TODO
 
-        self.softmax = Softmax.forward(self, Z = self.A)  # TODO - Can you reuse your own softmax here, if not rewrite the softmax forward logic?
+        self.softmax_layer = Softmax()
+        self.softmax = self.softmax_layer.forward(self.A)  # TODO - Can you reuse your own softmax here, if not rewrite the softmax forward logic?
 
         crossentropy = (-self.Y * np.log(self.softmax)) @ Ones_C  # TODO
         sum_crossentropy_loss = Ones_N.T @ crossentropy  # TODO
