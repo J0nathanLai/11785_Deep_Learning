@@ -12,8 +12,12 @@ class Upsample1d():
         Return:
             Z (np.array): (batch_size, in_channels, output_width)
         """
-        Z = None  # TODO
-        return NotImplemented
+        if A.shape[2] < 2: 
+            return A
+        output_width = self.upsampling_factor * (A.shape[2]-1) + 1
+        Z = np.zeros((A.shape[0], A.shape[1], output_width))
+        Z[:, :, ::self.upsampling_factor] = A
+        return Z
 
     def backward(self, dLdZ):
         """
@@ -22,8 +26,10 @@ class Upsample1d():
         Return:
             dLdA (np.array): (batch_size, in_channels, input_width)
         """
-        dLdA = None  # TODO
-        return NotImplemented
+        input_width = (dLdZ.shape[2]-1) // self.upsampling_factor + 1
+        dLdA = np.zeros((dLdZ.shape[0], dLdZ.shape[1], input_width))
+        dLdA = dLdZ[:, :, ::self.upsampling_factor]
+        return dLdA
 
 
 class Downsample1d():
