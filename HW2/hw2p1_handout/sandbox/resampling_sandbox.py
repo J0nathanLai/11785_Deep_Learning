@@ -33,8 +33,8 @@ upsampling_factor = 2
 upsample_1d = Upsample1d(upsampling_factor)
 
 # TODO: Uncomment the following lines and change the file to test downsampling
-#downsampling_factor = 2
-#downsample_1d = Downsample1d(downsampling_factor)
+downsampling_factor = 2
+downsample_1d = Downsample1d(downsampling_factor)
 ########################################################################
 
 # TODO: Uncomment the following lines and change the file to 2D versions
@@ -46,12 +46,26 @@ upsample_1d = Upsample1d(upsampling_factor)
 #TODO: Uncomment and/or add print statements as you need them.
 
 # Perform forward and backward pass
+
+### UPSAMPLE 1D
 forward_res = upsample_1d.forward(x)
 
 print("Forward shape: ", forward_res.shape)
 print("Forward result: ", forward_res)
 
 backward_res = upsample_1d.backward(forward_res)
+
+print("Backward shape: ", backward_res.shape)
+print("Backward result: ", backward_res)
+
+### DOWNSAMPLE 1D
+
+forward_res = downsample_1d.forward(x)
+
+print("Forward shape: ", forward_res.shape)
+print("Forward result: ", forward_res)
+
+backward_res = downsample_1d.backward(forward_res)
 
 print("Backward shape: ", backward_res.shape)
 print("Backward result: ", backward_res)
