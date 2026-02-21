@@ -42,9 +42,6 @@ layer = Conv1d_stride1(
     np.ones)
 
 # TODO: Uncomment the following lines and change the file to test Conv1d
-# stride = 2
-# model = nn.Conv1d(in_c, out_c, kernel, stride)
-
 
 y = layer.forward(x)
 #TODO: Uncomment and/or add print statements as you need them.
@@ -61,3 +58,23 @@ dx = layer.backward(delta)
 
 print("dx shape: ", dx.shape)
 print("dx: ", dx)
+
+### stride = 2 
+x2 = np.random.randn(batch, in_c, width)
+print("input shape: ", x2.shape)
+print("input: ", x2)
+
+# stride1 on SAME x2 (use same init)
+layer2 = Conv1d_stride1(in_c, out_c, kernel, sandbox_weight_init_fn, np.ones)
+y_s1_x2 = layer2.forward(x2)
+
+stride = 2
+model = Conv1d(in_c, out_c, kernel, stride,
+               padding=0,
+               weight_init_fn=sandbox_weight_init_fn,
+               bias_init_fn=np.ones)
+
+y2 = model.forward(x2)
+
+y_expected = y_s1_x2[:, :, ::stride]
+print("match?", np.allclose(y2, y_expected, atol=1e-6))
