@@ -1,5 +1,6 @@
 import numpy as np
-from mytorch.nn.activation import Softmax
+# from mytorch.nn.activation import Softmax
+from activation import Softmax
 
 class MSELoss:
     def forward(self, A, Y):

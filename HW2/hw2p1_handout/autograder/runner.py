@@ -6,14 +6,19 @@ from torch.autograd import Variable
 import multiprocessing as mtp
 import traceback
 import sys
+AUTOGRADER_DIR = os.path.dirname(os.path.abspath(__file__))   # .../autograder
+PROJECT_ROOT  = os.path.abspath(os.path.join(AUTOGRADER_DIR, ".."))  # project root
+
+sys.path.insert(0, PROJECT_ROOT)
+sys.path.insert(0, os.path.join(PROJECT_ROOT, "mytorch"))
+sys.path.insert(0, os.path.join(PROJECT_ROOT, "mytorch", "nn"))
+sys.path.insert(0, os.path.join(PROJECT_ROOT, "models"))
 from helpers import *
 from test import *
 from hw2p1_autograder_flags import *
 
-sys.path.append('mytorch')
 from flatten import *
 
-sys.path.append('mytorch/nn')
 from pool import *
 from resampling import *
 from ConvTranspose import *
@@ -24,7 +29,6 @@ from activation import *
 from loss import *
 
 
-sys.path.append('models')
 import mlp_scan as cnn_solution
 import cnn
 
