@@ -23,10 +23,10 @@ np.random.seed(11485) # Set the seed so that the random values are the same each
 in_c, out_c = 2, 2
 batch, input_width = 1, 4
 kernel = 2
-x = np.random.randn(batch, in_c, input_width)
+# x = np.random.randn(batch, in_c, input_width)
 
-print("input shape: ", x.shape)
-print("input: ", x)
+# print("input shape: ", x.shape)
+# print("input: ", x)
 
 # Initialize the resampling class
 upsampling_factor = 2
@@ -38,9 +38,13 @@ downsample_1d = Downsample1d(downsampling_factor)
 ########################################################################
 
 # TODO: Uncomment the following lines and change the file to 2D versions
-# x = np.random.randn(batch, in_c, input_width, input_width)
-# upsample_2d = Upsample2d(upsampling_factor)
-# downsample_2d = Downsample2d(downsampling_factor)
+x = np.random.randn(batch, in_c, input_width, input_width)
+
+print("input shape: ", x.shape)
+print("input: ", x)
+
+upsample_2d = Upsample2d(upsampling_factor)
+downsample_2d = Downsample2d(downsampling_factor)
 ########################################################################
 
 #TODO: Uncomment and/or add print statements as you need them.
@@ -48,24 +52,48 @@ downsample_1d = Downsample1d(downsampling_factor)
 # Perform forward and backward pass
 
 ### UPSAMPLE 1D
-forward_res = upsample_1d.forward(x)
+# forward_res = upsample_1d.forward(x)
+
+# print("Forward shape: ", forward_res.shape)
+# print("Forward result: ", forward_res)
+
+# backward_res = upsample_1d.backward(forward_res)
+
+# print("Backward shape: ", backward_res.shape)
+# print("Backward result: ", backward_res)
+
+### DOWNSAMPLE 1D
+
+# forward_res = downsample_1d.forward(x)
+
+# print("Forward shape: ", forward_res.shape)
+# print("Forward result: ", forward_res)
+
+# backward_res = downsample_1d.backward(forward_res)
+
+# print("Backward shape: ", backward_res.shape)
+# print("Backward result: ", backward_res)
+
+### UPSAMPLE 2D
+
+forward_res = upsample_2d.forward(x)
 
 print("Forward shape: ", forward_res.shape)
 print("Forward result: ", forward_res)
 
-backward_res = upsample_1d.backward(forward_res)
+backward_res = upsample_2d.backward(forward_res)
 
 print("Backward shape: ", backward_res.shape)
 print("Backward result: ", backward_res)
 
-### DOWNSAMPLE 1D
+### DOWNSAMPLE 2D
 
-forward_res = downsample_1d.forward(x)
+forward_res = downsample_2d.forward(x)
 
 print("Forward shape: ", forward_res.shape)
 print("Forward result: ", forward_res)
 
-backward_res = downsample_1d.backward(forward_res)
+backward_res = downsample_2d.backward(forward_res)
 
 print("Backward shape: ", backward_res.shape)
 print("Backward result: ", backward_res)
