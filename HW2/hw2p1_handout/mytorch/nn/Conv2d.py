@@ -36,9 +36,14 @@ class Conv2d_stride1():
         """
         self.A = A
 
-        Z = None  # TODO
-
-        return NotImplemented
+        output_height = A.shape[2] - self.kernel_size + 1
+        output_width = A.shape[3] - self.kernel_size + 1
+        Z = np.zeros((A.shape[0], self.out_channels, output_height, output_width))
+        for i in range(output_height):
+            for j in range(output_width):
+                Z[:, :, i, j] = np.tensordot(A[:, :, i:i+self.kernel_size, j:j+self.kernel_size], self.W, axes=([1, 2, 3], [1, 2, 3]))
+        Z += self.b[None, :, None, None]
+        return Z
 
     def backward(self, dLdZ):
         """
@@ -47,11 +52,22 @@ class Conv2d_stride1():
         Return:
             dLdA (np.array): (batch_size, in_channels, input_height, input_width)
         """
-        self.dLdW = None  # TODO
-        self.dLdb = None  # TODO
-        dLdA = None  # TODO
-
-        return NotImplemented
+        self.dLdW = np.zeros(self.W.shape)
+        for i in range(self.kernel_size):
+            for j in range(self.kernel_size):
+                self.dLdW[:, :, i, j] = np.tensordot(self.A[:, :, i:i+dLdZ.shape[2], j:j+dLdZ.shape[3]], dLdZ, axes=([0, 2, 3],[0, 2, 3])).T
+        self.dLdb = np.sum(dLdZ, axis=(0, 2, 3))  # sum over batch, height and width
+        pad_dLdZ = np.pad(dLdZ, ((0, 0), (0, 0), (self.kernel_size-1, self.kernel_size-1), (self.kernel_size-1, self.kernel_size-1)))
+        flip_W = np.flip(self.W, axis=(2, 3))
+        dLdA = np.zeros(self.A.shape)
+        for i in range(self.A.shape[2]):
+            for j in range(self.A.shape[3]):
+                dLdA[:, :, i, j] = np.tensordot(
+                    pad_dLdZ[:, :, i:i+self.kernel_size, j:j+self.kernel_size],
+                    flip_W,
+                    axes=([1, 2, 3],[0, 2, 3])
+                )
+        return dLdA
 
 
 class Conv2d():
