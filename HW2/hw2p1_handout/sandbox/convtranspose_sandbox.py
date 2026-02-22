@@ -28,8 +28,8 @@ x = np.random.randn(batch, in_c, width)
 
 
 # weight fn initializes a matrix of 1s
-def sandbox_weight_init_fn(out_channels, in_channels, kernel_size):
-    return np.ones((out_channels, in_channels, kernel_size))
+def sandbox_weight_init_fn(out_channels, in_channels, *kernel_size):
+    return np.ones((out_channels, in_channels, *kernel_size))
 
 # bias fn initializes a matrix of 0s
 def sandbox_bias_init_fn(out_channels):
@@ -48,14 +48,43 @@ conv_transpose_1d = ConvTranspose1d(
 #Test outputs
 #TODO: Uncomment and/or add print statements as you need them.
 
+### CONV_TRANSPOSE_1D
 y = conv_transpose_1d.forward(x)
-# print("output shape: ", y.shape)
-# print("output: ", y)
+print("output shape: ", y.shape)
+print("output: ", y)
 
 delta = np.ones(y.shape)
-# print("delta shape: ", delta.shape)
-# print("delta: ", delta)
+print("delta shape: ", delta.shape)
+print("delta: ", delta)
 
 conv_backward_res = conv_transpose_1d.backward(delta)
-# print("dx shape: ", conv_backward_res.shape)
-# print("dx: ", conv_backward_res)
+print("dx shape: ", conv_backward_res.shape)
+print("dx: ", conv_backward_res)
+
+### CONV_TRANSPOSE_2D
+
+height, width2 = 4, 4
+kernel2d, upsampling_factor2d = 2, 2
+
+x2 = np.random.randn(batch, in_c, height, width2)
+
+conv_transpose_2d = ConvTranspose2d(
+    in_channels=in_c,
+    out_channels=out_c,
+    kernel_size=kernel2d,
+    upsampling_factor=upsampling_factor2d,
+    weight_init_fn=sandbox_weight_init_fn,   # SAME as 1D
+    bias_init_fn=sandbox_bias_init_fn        # SAME as 1D
+)
+
+y2 = conv_transpose_2d.forward(x2)
+print("output shape: ", y2.shape)
+print("output: ", y2)
+
+delta2 = np.ones(y2.shape)
+print("delta shape: ", delta2.shape)
+print("delta: ", delta2)
+
+dx2 = conv_transpose_2d.backward(delta2)
+print("dx shape: ", dx2.shape)
+print("dx: ", dx2)
