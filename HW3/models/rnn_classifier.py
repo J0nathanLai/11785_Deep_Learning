@@ -15,12 +15,12 @@ class RNNPhonemeClassifier(object):
         self.num_layers = num_layers
 
         # TODO: Understand then uncomment this code :)
-        # self.rnn = [
-        #     RNNCell(input_size, hidden_size) if i == 0 
-        #         else RNNCell(hidden_size, hidden_size)
-        #             for i in range(num_layers)
-        # ]
-        # self.output_layer = Linear(hidden_size, output_size)
+        self.rnn = [
+            RNNCell(input_size, hidden_size) if i == 0 
+                else RNNCell(hidden_size, hidden_size)
+                    for i in range(num_layers)
+        ]
+        self.output_layer = Linear(hidden_size, output_size)
 
         self.hiddens = []
 
@@ -77,11 +77,16 @@ class RNNPhonemeClassifier(object):
         # (More specific pseudocode may exist in the write-up and/or lecture slides)
         
         # TODO
-
+        for t in range(seq_len):
+            x_t = x[:, t, :]
+            for l in range(self.num_layers):
+                x_t = self.rnn[l](x_t, hidden[l])
+                hidden[l] = x_t
+            self.hiddens.append(hidden.copy())
         # Get the outputs from the last time step using the linear layer and return it
-        
-        # return logits
-        raise NotImplementedError
+        logits = self.output_layer(hidden[-1])
+        return logits
+        # raise NotImplementedError
 
     def backward(self, delta):
         """RNN Back Propagation Through Time (BPTT).
@@ -109,6 +114,19 @@ class RNNPhonemeClassifier(object):
         # WATCH out for off by 1 errors due to implementation decisions.
         
         # TODO
+        for t in range(seq_len-1, -1, -1):
+            for l in range(self.num_layers-1, -1, -1):
+                if l == 0:
+                    h_prev_l = self.x[:, t, :]
+                else:
+                    h_prev_l = self.hiddens[t+1][l-1]
+                h_t = self.hiddens[t+1][l]
+                h_prev_t = self.hiddens[t][l]
+                dx, dh_prev = self.rnn[l].backward(dh[l], h_t, h_prev_l, h_prev_t)
 
-        # return dh / batch_size
-        raise NotImplementedError
+                dh[l] = dh_prev
+
+                if l != 0:
+                    dh[l-1] += dx
+        return dh / batch_size
+        # raise NotImplementedError
