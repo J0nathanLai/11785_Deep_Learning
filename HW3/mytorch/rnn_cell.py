@@ -65,8 +65,12 @@ class RNNCell(object):
 
         # TODO
 
-        # return h_t
-        raise NotImplementedError
+        h_t = self.activation.forward(
+            x @ self.W_ih.T + self.b_ih + h_prev_t @ self.W_hh.T + self.b_hh
+        )
+
+        return h_t
+        # raise NotImplementedError
 
     def backward(self, delta, h_t, h_prev_l, h_prev_t):
         """
