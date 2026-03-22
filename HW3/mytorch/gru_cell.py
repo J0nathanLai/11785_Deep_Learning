@@ -91,6 +91,11 @@ class GRUCell(object):
         # Define your variables based on the writeup using the corresponding
         # names below.
 
+        self.r = self.r_act.forward(self.Wrx @ x + self.brx + self.Wrh @ h_prev_t + self.brh)
+        self.z = self.z_act.forward(self.Wzx @ x + self.bzx + self.Wzh @ h_prev_t + self.bzh)
+        self.n = self.h_act.forward(self.Wnx @ x + self.bnx + self.r * (self.Wnh @ h_prev_t + self.bnh))
+        h_t = (1 - self.z) * self.n + self.z * h_prev_t
+
         assert self.x.shape == (self.d,)
         assert self.hidden.shape == (self.h,)
 
@@ -99,8 +104,8 @@ class GRUCell(object):
         assert self.n.shape == (self.h,)
         assert h_t.shape == (self.h,)  # h_t is the final output of you GRU cell.
 
-        # return h_t
-        raise NotImplementedError
+        return h_t
+        # raise NotImplementedError
 
     def backward(self, delta):
         """GRU cell backward.
@@ -134,9 +139,36 @@ class GRUCell(object):
         # ADDITIONAL TIP:
         # Make sure the shapes of the calculated dWs and dbs  match the
         # initalized shapes accordingly
+        dn = delta * (1 - self.z)
+        dz = delta * (self.hidden - self.n)
+        dh_prev_t = delta * self.z
+
+        da_n = self.h_act.backward(dn, state=self.n)
+        dr = da_n * (self.Wnh @ self.hidden + self.bnh)
+        dq = da_n * self.r
+        self.dWnx += da_n.reshape(-1, 1) @ self.x.reshape(1, -1)
+        self.dbnx += da_n
+
+        self.dWnh += dq.reshape(-1, 1) @ self.hidden.reshape(1, -1)
+        self.dbnh += dq
+
+        da_z = self.z_act.backward(dz)
+        self.dWzx += da_z.reshape(-1, 1) @ self.x.reshape(1, -1)
+        self.dbzx += da_z
+        self.dWzh += da_z.reshape(-1, 1) @ self.hidden.reshape(1, -1)
+        self.dbzh += da_z
+
+        da_r = self.r_act.backward(dr)
+        self.dWrx += da_r.reshape(-1, 1) @ self.x.reshape(1, -1)
+        self.dbrx += da_r
+        self.dWrh += da_r.reshape(-1, 1) @ self.hidden.reshape(1, -1)
+        self.dbrh += da_r
+
+        dx = self.Wnx.T @ da_n + self.Wzx.T @ da_z + self.Wrx.T @ da_r
+        dh_prev_t += self.Wnh.T @ dq + self.Wzh.T @ da_z + self.Wrh.T @ da_r
 
         assert dx.shape == (self.d,)
         assert dh_prev_t.shape == (self.h,)
 
-        # return dx, dh_prev_t
-        raise NotImplementedError
+        return dx, dh_prev_t
+        # raise NotImplementedError
