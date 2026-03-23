@@ -46,9 +46,15 @@ class GreedySearchDecoder(object):
         path_prob = 1
 
         # TODO: Implement the greedy search decoding algorithm here
+        for t in range(y_probs.shape[1]):
+            best_symbol = np.argmax(y_probs[:, t, 0])
+            path_prob *= y_probs[best_symbol, t, 0]
+            if best_symbol != blank and (t == 0 or best_symbol != np.argmax(y_probs[:, t-1, 0])):
+                decoded_path.append(self.symbol_set[best_symbol - 1])
+        decoded_path = ''.join(decoded_path)
 
-        #return decoded_path, path_prob
-        raise NotImplementedError
+        return decoded_path, path_prob
+        # raise NotImplementedError
 
 
 class BeamSearchDecoder(object):
