@@ -45,6 +45,13 @@ class CTC(object):
         # -------------------------------------------->
         # TODO
         # <---------------------------------------------
+        skip_connect = [0] * N
+        for i in range(1, N, 2):
+            if i == 1:
+                continue
+            else:
+                if extended_symbols[i] != extended_symbols[i-2]:
+                    skip_connect[i] = 1
 
         # -------------------------------------------->
         # TODO: Develop the logic for `skip_connect`.
@@ -53,8 +60,8 @@ class CTC(object):
         # Consider the conditions under which a 'skip' is allowed in the extended symbol sequence.
         # <---------------------------------------------
 
-        # return extended_symbols, skip_connect
-        raise NotImplementedError
+        return extended_symbols, skip_connect
+        # raise NotImplementedError
 
     def get_forward_probs(self, logits, extended_symbols, skip_connect):
         """Compute forward probabilities.
