@@ -93,9 +93,12 @@ class CTC(object):
         # -------------------------------------------->
         # TODO: Initialize the starting probabilities for the first time step.
 		# TODO: Intialize alpha[0][0]
+        alpha[0][0] = logits[0, extended_symbols[0]]
 		# TODO: Intialize alpha[0][1]
         # This involves setting the initial values for the first two extended symbols.
         #
+        if S > 1:
+            alpha[0][1] = logits[0, extended_symbols[1]]
 		# TODO: Compute all values for alpha[t][sym] where 1 <= t < T and 1 <= sym < S (assuming zero-indexing)
         # TODO: Implement the iterative computation for `alpha` values across all subsequent time steps.
         # IMP: Remember to check for skipConnect when calculating alpha
@@ -106,8 +109,16 @@ class CTC(object):
         # Ensure proper indexing and multiplication with the relevant logit for the current state.
         # <---------------------------------------------
 
-        # return alpha
-        raise NotImplementedError
+        for t in range(1, T):
+            for s in range(S):
+                last_total = alpha[t-1][s]
+                if s-1 >= 0:
+                    last_total += alpha[t-1][s-1]
+                if s-2 >= 0 and skip_connect[s]:
+                    last_total += alpha[t-1][s-2]
+                alpha[t][s] = last_total * logits[t, extended_symbols[s]]
+        return alpha
+        # raise NotImplementedError
 
     def get_backward_probs(self, logits, extended_symbols, skip_connect):
         """Compute backward probabilities.
@@ -139,6 +150,10 @@ class CTC(object):
         # TODO: Establish the terminating probabilities at the last time step.
         # This typically involves setting initial `beta` values for the last two extended symbols.
         #
+        beta[T-1][S-1] = 1.0
+
+        if S > 1:
+            beta[T-1][S-2] = 1.0
         # TODO: Proceed with backward iterative computation for `beta` values through time.
         # For each `beta[t][sym]`, determine the contributions from future states at time `t+1`.
         # These contributions usually involve the same symbol at `t+1` and the next symbol at `t+1`.
@@ -148,12 +163,20 @@ class CTC(object):
         # Each computed beta value should be adjusted by the current symbol's logit at the current time step.
         # <--------------------------------------------
 
+        for t in range(T-2, -1, -1):
+            for s in range(S):
+                next_total = beta[t+1][s] * logits[t+1, extended_symbols[s]]
+                if s+1 < S:
+                    next_total += beta[t+1][s+1] * logits[t + 1, extended_symbols[s + 1]]
+                if s+2 < S and skip_connect[s+2]:
+                    next_total += beta[t+1][s+2] * logits[t + 1, extended_symbols[s + 2]]
+                beta[t][s] = next_total
         # -------------------------------------------->
         # TODO
         # <--------------------------------------------
 
-        # return beta
-        raise NotImplementedError
+        return beta
+        # raise NotImplementedError
 
     def get_posterior_probs(self, alpha, beta):
         """Compute posterior probabilities.
@@ -188,8 +211,13 @@ class CTC(object):
         # Remember to add a small numerical stability constant (epsilon) to the denominator.
         # <---------------------------------------------
 
-        # return gamma
-        raise NotImplementedError
+        for t in range(T):
+            for s in range(S):
+                gamma[t][s] = alpha[t][s] * beta[t][s]
+            sumgamma[t] = np.sum(gamma[t, :])
+            gamma[t, :] /= (sumgamma[t])
+        return gamma
+        # raise NotImplementedError
 
 
 class CTCLoss(object):
@@ -272,16 +300,23 @@ class CTCLoss(object):
             #     Compute expected divergence for each batch and store it in totalLoss
             #     Take an average over all batches and return final result
             # <---------------------------------------------
-
+            trunc_target = self.target[batch_itr, :self.target_lengths[batch_itr]]
+            trunc_logits = self.logits[:self.input_lengths[batch_itr], batch_itr, :]
+            ext, skip = self.ctc.extend_target_with_blank(trunc_target)
+            self.extended_symbols.append(ext)
+            alpha = self.ctc.get_forward_probs(trunc_logits, ext, skip)
+            beta = self.ctc.get_backward_probs(trunc_logits, ext, skip)
+            gamma = self.ctc.get_posterior_probs(alpha, beta)
+            self.gammas.append(gamma)
+            total_loss[batch_itr] = -np.sum(gamma * np.log(trunc_logits[:, ext]))
             # -------------------------------------------->
             # TODO
             # <---------------------------------------------
-            pass
 
         total_loss = np.sum(total_loss) / B
 
-        # return total_loss
-        raise NotImplementedError
+        return total_loss
+        # raise NotImplementedError
 
     def backward(self):
         """
@@ -326,14 +361,16 @@ class CTCLoss(object):
             #     Extend target sequence with blank
             extended, _ = self.ctc.extend_target_with_blank(target)
             #     Compute derivative of divergence and store them in dY
-            
+            for t in range(self.input_lengths[batch_itr]):
+                for s, c in enumerate(extended):
+                    dY[t, batch_itr, c] -= self.gammas[batch_itr][t][s] / self.logits[t, batch_itr, c]
             # <---------------------------------------------
             
 
             # -------------------------------------------->
             # TODO
             # <---------------------------------------------
-            pass
+            # pass
 
-        # return dY
-        raise NotImplementedError
+        return dY
+        # raise NotImplementedError
