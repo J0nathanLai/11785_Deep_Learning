@@ -111,6 +111,45 @@ class BeamSearchDecoder(object):
         # 4. Pruning the set of paths to keep only the top 'beam_width' paths
         # 5. After iterating all time steps, merge duplicate paths again if needed
         # 6. Return the best final sequence and the paths & scores for all final sequences
+        blank = '-'
+        ActivePaths = {blank: 1.0}
+        TempPaths = {}
         
-        #return best_path, merged_paths
-        raise NotImplementedError
+
+        for t in range(T):
+            symbol_probs = y_probs[:, t, 0]
+            sorted_active_paths = sorted(ActivePaths.items(), key=lambda x: x[1], reverse=True)[:self.beam_width]
+            for path, score in sorted_active_paths:
+                last = path[-1]
+                for s in range(len(self.symbol_set)+1):
+                    if s == 0:
+                        if last == blank:
+                            new_path = path
+                        else:
+                            new_path = path + blank
+                    else:
+                        symbol = self.symbol_set[s - 1]
+                        if last == symbol:
+                            new_path = path
+                        elif last == blank:
+                            new_path = path[:-1] + symbol
+                        else:
+                            new_path = path + symbol
+                    new_score = score * symbol_probs[s]
+                    TempPaths[new_path] = TempPaths.get(new_path, 0) + new_score
+            ActivePaths = TempPaths
+            TempPaths = {}
+        merged_paths = {}
+        for path, score in ActivePaths.items():
+            final_path = path.strip(blank)
+            merged_paths[final_path] = merged_paths.get(final_path, 0) + score
+        
+        best_path = ""
+        best_path_score = 0.0
+        for path, score in merged_paths.items():
+            if score > best_path_score:
+                best_path_score = score
+                best_path = path
+
+        return best_path, merged_paths
+        # raise NotImplementedError
