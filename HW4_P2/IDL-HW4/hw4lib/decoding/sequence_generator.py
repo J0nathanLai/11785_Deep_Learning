@@ -260,17 +260,16 @@ class SequenceGenerator:
             beam_indices = indices // vocab_size
             next_tokens = indices % vocab_size
 
-            finished_flags = torch.gather(finished_flags, dim=1, index=beam_indices)
+            batch_i = torch.arange(x.size(0), device=x.device).unsqueeze(1)
+            finished_flags = finished_flags[batch_i, beam_indices]
             finished_flags = finished_flags | (next_tokens == self.tokenizer.eos_id)
 
-            gather_i = beam_indices.unsqueeze(-1).expand(-1, -1, x.size(-1))
-            x = torch.gather(x, dim=1, index=gather_i)
-            
+            x = x[batch_i, beam_indices]
             x = torch.cat([x, next_tokens.unsqueeze(-1)], dim=-1)
         
         scores, sort_idx = torch.sort(scores, dim=-1, descending=True)
-        gather_i = sort_idx.unsqueeze(-1).expand(-1, -1, x.size(-1))
-        x = torch.gather(x, dim=1, index=gather_i)
+        batch_idx = torch.arange(x.size(0), device=x.device).unsqueeze(1)
+        x = x[batch_idx, sort_idx]
 
         return x, scores
         # raise NotImplementedError # Remove once implemented
