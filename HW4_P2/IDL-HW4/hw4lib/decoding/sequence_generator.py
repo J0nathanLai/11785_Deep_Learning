@@ -221,7 +221,59 @@ class SequenceGenerator:
             raise ValueError("max_length must be >= input sequence length")
         
         # TODO: Implement beam search
-        raise NotImplementedError # Remove once implemented
+        scores = torch.zeros(x.shape[0], beam_width)
+        finished_flags = torch.zeros(x.shape[0], beam_width, dtype=torch.bool)
+
+        logits = self.score_fn(x)
+        logits = self._apply_repeat_penalty(logits, x, repeat_penalty)
+        logits = logits / temperature
+        log_probs = torch.log_softmax(logits, dim=-1)
+
+        scores, next_tokens = torch.topk(log_probs, beam_width, dim=-1)
+        x = x.unsqueeze(1).repeat(1, beam_width, 1)
+        x = torch.cat([x, next_tokens.unsqueeze(-1)], dim=-1)
+        finished_flags = (next_tokens == self.tokenizer.eos_id)
+
+        for t in range(1, self.max_length):
+            if finished_flags.all():
+                break
+
+            next_token_scores = []
+            for beam_i in range(beam_width):
+                beam_x = x[:, beam_i, :]
+                beam_logits = self.score_fn(beam_x)
+                next_token_scores.append(beam_logits)
+            
+            next_token_scores = torch.stack(next_token_scores, dim=1)
+            next_token_scores = self._apply_repeat_penalty(next_token_scores, x, repeat_penalty)
+            next_token_scores = next_token_scores / temperature
+            next_token_scores = torch.log_softmax(next_token_scores, dim=-1)
+
+            cum_scores = scores.unsqueeze(-1) + next_token_scores
+
+            vocab_size = cum_scores.shape[2]
+
+            cum_scores = cum_scores.flatten(start_dim=1)
+
+            scores, indices = torch.topk(cum_scores, beam_width, dim=-1)
+
+            beam_indices = indices // vocab_size
+            next_tokens = indices % vocab_size
+
+            finished_flags = torch.gather(finished_flags, dim=1, index=beam_indices)
+            finished_flags = finished_flags | (next_tokens == self.tokenizer.eos_id)
+
+            gather_i = beam_indices.unsqueeze(-1).expand(-1, -1, x.size(-1))
+            x = torch.gather(x, dim=1, index=gather_i)
+            
+            x = torch.cat([x, next_tokens.unsqueeze(-1)], dim=-1)
+        
+        scores, sort_idx = torch.sort(scores, dim=-1, descending=True)
+        gather_i = sort_idx.unsqueeze(-1).expand(-1, -1, x.size(-1))
+        x = torch.gather(x, dim=1, index=gather_i)
+
+        return x, scores
+        # raise NotImplementedError # Remove once implemented
 
     def generate_sample(
             self,
