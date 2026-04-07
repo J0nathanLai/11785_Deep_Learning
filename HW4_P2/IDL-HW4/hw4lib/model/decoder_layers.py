@@ -51,9 +51,11 @@ class SelfAttentionDecoderLayer(nn.Module):
         ''' 
         super().__init__()
         # TODO: Implement __init__
-       
+
         # TODO: Initialize the sublayers      
-        raise NotImplementedError # Remove once implemented
+        # raise NotImplementedError # Remove once implemented
+        self.self_attn = SelfAttentionLayer(d_model, num_heads, dropout)
+        self.ffn = FeedForwardLayer(d_model, d_ff, dropout)
 
     def forward(self, x: torch.Tensor, key_padding_mask: Optional[torch.Tensor] = None, attn_mask: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, torch.Tensor]:
         '''
@@ -68,10 +70,12 @@ class SelfAttentionDecoderLayer(nn.Module):
             mha_attn_weights (torch.Tensor): The attention weights. shape: (batch_size, seq_len, seq_len)   
         '''
         # TODO: Implement forward: Follow the figure in the writeup
-
+        x, mha_attn_weights = self.self_attn(x, key_padding_mask, attn_mask)
+        x = self.ffn(x)
 
         # TODO: Return the output tensor and attention weights
-        raise NotImplementedError # Remove once implemented
+        # raise NotImplementedError # Remove once implemented
+        return x, mha_attn_weights
 
 ## -------------------------------------------------------------------------------------------------    
 class CrossAttentionDecoderLayer(nn.Module):
