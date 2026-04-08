@@ -166,8 +166,8 @@ class SequenceGenerator:
         
         # TODO: Implement greedy search
         # raise NotImplementedError # Remove once implemented
-        scores = torch.zeros(x.shape[0])
-        finished_flags = torch.zeros(x.shape[0], dtype=torch.bool)
+        scores = torch.zeros(x.shape[0], device=x.device)
+        finished_flags = torch.zeros(x.shape[0], dtype=torch.bool, device=x.device)
 
         for t in range(self.max_length - x.shape[1]):
             if finished_flags.all():
@@ -221,8 +221,8 @@ class SequenceGenerator:
             raise ValueError("max_length must be >= input sequence length")
         
         # TODO: Implement beam search
-        scores = torch.zeros(x.shape[0], beam_width)
-        finished_flags = torch.zeros(x.shape[0], beam_width, dtype=torch.bool)
+        scores = torch.zeros(x.shape[0], beam_width, device=x.device)
+        finished_flags = torch.zeros(x.shape[0], beam_width, dtype=torch.bool, device=x.device)
 
         logits = self.score_fn(x)
         logits = self._apply_repeat_penalty(logits, x, repeat_penalty)
