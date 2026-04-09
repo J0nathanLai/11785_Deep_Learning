@@ -219,7 +219,8 @@ class ASRTrainer(BaseTrainer):
         """
         # TODO: In-fill the _validate_epoch method
         # raise NotImplementedError # Remove once implemented
-        results = self.recognize(dataloader)
+        recognition_config = self.config.get('validation', {}).get('recognition', None)
+        results = self.recognize(dataloader, recognition_config, config_name='val')
         references = [result['target'] for result in results]
         hypotheses = [result['generated'] for result in results]
 
