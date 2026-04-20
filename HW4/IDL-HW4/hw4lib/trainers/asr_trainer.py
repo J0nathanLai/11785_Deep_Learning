@@ -250,11 +250,13 @@ class ASRTrainer(BaseTrainer):
         # Set max transcript length
         self.text_max_len = max(val_dataloader.dataset.text_max_len, train_dataloader.dataset.text_max_len)
 
-        # Training loop
-        best_val_loss = float('inf')
-        best_val_wer  = float('inf')
-        best_val_cer  = float('inf')
-        best_val_dist = float('inf')
+        # Early stopping configuration. Disabled by default to preserve existing behavior.
+        early_stop_config = self.config.get('training', {}).get('early_stopping', {})
+        early_stop_enabled = early_stop_config.get('enabled', False)
+        early_stop_patience = int(early_stop_config.get('patience', epochs))
+
+        best_val_cer = self.best_metric if self.best_metric != float('inf') else float('inf')
+        epochs_without_improvement = 0
 
         for epoch in range(self.current_epoch, self.current_epoch + epochs):
 
@@ -304,10 +306,20 @@ class ASRTrainer(BaseTrainer):
             if val_metrics['cer'] < best_val_cer:
                 best_val_cer = val_metrics['cer']
                 self.best_metric = val_metrics['cer']
-                self.save_checkpoint('checkpoint-best-metric-model.pth') 
+                epochs_without_improvement = 0
+                self.save_checkpoint('checkpoint-best-metric-model.pth')
+            else:
+                epochs_without_improvement += 1
 
             self.current_epoch += 1
-                
+
+            if early_stop_enabled and epochs_without_improvement >= early_stop_patience:
+                print(
+                    f"Early stopping triggered after epoch {epoch}. "
+                    f"Best val CER: {best_val_cer:.4f}"
+                )
+                break
+
 
     def evaluate(self, dataloader, max_length: Optional[int] = None) -> Dict[str, Dict[str, float]]:
         """
